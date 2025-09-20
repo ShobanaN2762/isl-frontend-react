@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 function AuthModal() {
   const {
@@ -10,7 +11,7 @@ function AuthModal() {
     login,
     register,
   } = useAuth();
-
+  const navigate = useNavigate();
   // State for form inputs
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,6 +41,7 @@ function AuthModal() {
     setLoading(false);
     if (result.success) {
       closeAuthModal();
+      navigate("/dashboard"); // 3. Navigate to dashboard on success
     } else {
       setError(result.message || "Failed to log in.");
     }
@@ -52,7 +54,7 @@ function AuthModal() {
     const result = await register(name, email, password);
     setLoading(false);
     if (result.success) {
-      openAuthModal("login"); // Switch to login form on successful registration
+      openAuthModal("login");
     } else {
       setError(result.message || "Failed to register.");
     }
