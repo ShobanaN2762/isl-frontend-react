@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { learningModules } from "../data/LearningData";
 // import { useAuth } from "../context/AuthContext";
 import ModuleListView from "../components/learning/ModuleListView";
-import LessonView from "../components/learning/LessonView";
+import LessonView from "../components/learning/LessonsView";
 
 function LearningPage() {
   const [selectedModuleId, setSelectedModuleId] = useState(null);
