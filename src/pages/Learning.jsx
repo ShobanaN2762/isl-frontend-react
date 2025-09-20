@@ -5,6 +5,7 @@ import { learningModules } from "../data/LearningData";
 // import { useAuth } from "../context/AuthContext";
 import ModuleListView from "../components/learning/ModuleListView";
 import LessonView from "../components/learning/LessonsView";
+import PracticeView from "../components/learning/PracticeView";
 
 function LearningPage() {
   const [selectedModuleId, setSelectedModuleId] = useState(null);
