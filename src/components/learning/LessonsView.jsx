@@ -94,6 +94,7 @@ function LessonView({
   onBackToLessonList,
   completedLessons,
   onCompleteLesson,
+  onStartPractice,
 }) {
   // Find the specific lesson if an ID is selected
   const selectedLesson =
@@ -138,7 +139,10 @@ function LessonView({
                         muted
                         loop
                       ></video>
-                      <button className="btn btn-primary mt-auto">
+                      <button
+                        className="btn btn-primary mt-auto"
+                        onClick={() => onStartPractice(item, selectedLesson)}
+                      >
                         <i className="fa-solid fa-camera me-2"></i>Practice
                       </button>
                     </div>
