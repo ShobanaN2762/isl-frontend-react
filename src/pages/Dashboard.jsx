@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
-import { formatDate } from "./utils/helper";
-import { learningModules } from "./data/learningData.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { formatDate } from "../utils/helper.jsx";
+import { learningModules } from "../data/LearningData.js";
 import {
   mockProgress,
   mockAchievements,
