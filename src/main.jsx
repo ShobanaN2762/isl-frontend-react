@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext";
+import { AIProvider } from "./context/AIContext";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -13,7 +14,9 @@ import "./styles/responsive.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
-      <App />
+      <AIProvider>
+        <App />
+      </AIProvider>
     </AuthProvider>
   </React.StrictMode>
 );
