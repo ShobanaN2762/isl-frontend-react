@@ -1,5 +1,3 @@
-// src/components/learning/LessonView.jsx
-
 import React from "react";
 
 // A helper component for displaying a single lesson in a list
