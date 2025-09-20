@@ -13,6 +13,8 @@ function LearningPage() {
     new Set(["intro-to-isl"])
   );
 
+  const [practicingSign, setPracticingSign] = useState(null);
+
   const selectedModule = selectedModuleId
     ? learningModules.find((m) => m.id === selectedModuleId)
     : null;
@@ -20,6 +22,14 @@ function LearningPage() {
   const handleSelectModule = (moduleId) => {
     setSelectedModuleId(moduleId);
     setSelectedLessonId(null);
+  };
+
+  const handleStartPractice = (sign, lesson) => {
+    setPracticingSign({ ...sign, modelType: lesson.modelType });
+  };
+
+  const handleExitPractice = () => {
+    setPracticingSign(null); // Exit practice mode by clearing the state
   };
 
   const handleSelectLesson = (lessonId) => {
@@ -42,6 +52,11 @@ function LearningPage() {
     newCompletedLessons.add(lessonId);
     setCompletedLessons(newCompletedLessons);
   };
+
+  // If we are in practice mode, show the PracticeView. Otherwise, show the normal module/lesson view.
+  if (practicingSign) {
+    return <PracticeView sign={practicingSign} onExit={handleExitPractice} />;
+  }
 
   return (
     <div className="container py-5">
@@ -66,6 +81,7 @@ function LearningPage() {
             onBackToLessonList={handleBackToLessonList} // Pass the new function
             completedLessons={completedLessons}
             onCompleteLesson={handleCompleteLesson}
+            onStartPractice={handleStartPractice}
           />
         </div>
       </div>
