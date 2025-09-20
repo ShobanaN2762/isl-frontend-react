@@ -3,7 +3,7 @@
  * Structured learning content for Indian Sign Language
  */
 
-window.learningModules = [
+export const learningModules = [
   {
     id: "basics",
     title: "ISL Basics",
