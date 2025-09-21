@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import TextToSignView from "../components/translator/TextToSignView";
-// We will create and import SignToTextView in the next step
-// import SignToTextView from '../components/translator/SignToTextView';
+import SignToTextView from "../components/translator/SignToTextView";
 
 function TranslatorPage() {
   const [mode, setMode] = useState("text-to-sign"); // 'text-to-sign' or 'sign-to-text'
@@ -34,14 +33,7 @@ function TranslatorPage() {
       </div>
 
       {/* Conditionally render the correct view based on the mode */}
-      {mode === "text-to-sign" ? (
-        <TextToSignView />
-      ) : (
-        // This will be the SignToTextView component in the next step
-        <div className="text-center p-5 bg-white rounded shadow border">
-          <h3 className="text-navy">Sign to Text (Coming Soon)</h3>
-        </div>
-      )}
+      {mode === "text-to-sign" ? <TextToSignView /> : <SignToTextView />}
     </div>
   );
 }
