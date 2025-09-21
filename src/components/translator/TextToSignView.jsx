@@ -6,7 +6,15 @@ function TextToSignView() {
   const [videoStatus, setVideoStatus] = useState("idle"); // 'idle', 'loading', 'playing', 'error'
   const videoRef = useRef(null);
 
-  const suggestions = ["Good Morning", "Thank You", "What Is Your Name"];
+  const suggestions = [
+    "Good Morning",
+    "Thank You",
+    "What Is Your Name",
+    "I don't know",
+    "I know",
+    "I don't understand",
+    "I understand",
+  ];
 
   // --- 1. Wrap handleTranslate in useCallback ---
   // This function now only gets recreated when 'text' changes.
