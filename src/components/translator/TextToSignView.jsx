@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 
 function TextToSignView() {
   const [text, setText] = useState("");
-  const [videoSrc, setVideoSrc] = useState("");
-  const [videoStatus, setVideoStatus] = useState("idle"); // 'idle', 'loading', 'playing', 'error'
+  // 1. Initialize videoSrc with null instead of an empty string
+  const [videoSrc, setVideoSrc] = useState(null);
+  const [videoStatus, setVideoStatus] = useState("idle");
   const videoRef = useRef(null);
 
   const suggestions = [
@@ -23,11 +24,12 @@ function TextToSignView() {
     setVideoStatus("loading");
     const formattedText = text.trim().toLowerCase().replace(/ /g, "_");
     setVideoSrc(`/videos/sentences/${formattedText}.mp4`);
-  }, [text]); // It depends on the 'text' state
+  }, [text]);
 
   const handleClear = () => {
     setText("");
-    setVideoSrc("");
+    // 2. Set videoSrc back to null on clear
+    setVideoSrc(null);
     setVideoStatus("idle");
   };
 
@@ -35,17 +37,19 @@ function TextToSignView() {
     setText(suggestion);
   };
 
-  // --- 2. Add the stable handleTranslate function to the dependency array ---
   useEffect(() => {
+    if (!text.trim()) {
+      handleClear();
+      return;
+    }
     const handler = setTimeout(() => {
-      // We don't need to check for text here, as the effect only runs when text changes.
       handleTranslate();
     }, 500);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [text, handleTranslate]); // Dependency array is now correct
+  }, [text, handleTranslate]);
 
   return (
     <div className="row g-4">
