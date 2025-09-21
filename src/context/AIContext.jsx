@@ -6,14 +6,12 @@ const Hands = window.Hands;
 
 const AIContext = createContext();
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAI() {
   return useContext(AIContext);
 }
 
 export function AIProvider({ children }) {
   const [models, setModels] = useState({ static: null, dynamic: null });
-  // --- ADD NEW STATE FOR LABELS ---
   const [labels, setLabels] = useState({ static: [], dynamic: [] });
   const [holistic, setHolistic] = useState(null);
   const [hands, setHands] = useState(null);
@@ -25,7 +23,7 @@ export function AIProvider({ children }) {
       try {
         console.log("--- 🧠 AIContext: Initializing AI resources ---");
 
-        // --- UPDATE PROMISE.ALL TO INCLUDE LABELS ---
+        // Step 1: Concurrently load TensorFlow models and their labels
         const [staticModel, dynamicModel, staticLabels, dynamicLabels] =
           await Promise.all([
             tf.loadGraphModel("/isl_static_model_tfjs/model.json"),
@@ -35,23 +33,46 @@ export function AIProvider({ children }) {
           ]);
 
         setModels({ static: staticModel, dynamic: dynamicModel });
-        // --- SET THE LABELS STATE ---
         setLabels({
           static: Object.values(staticLabels),
           dynamic: Object.values(dynamicLabels),
         });
         console.log("✅ TensorFlow models and labels loaded");
 
-        // ... (MediaPipe loading remains the same)
+        // Step 2: Create instances of MediaPipe solutions
         const holisticInstance = new Holistic({
-          /* ... */
+          locateFile: (file) =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`,
         });
-        setHolistic(holisticInstance);
-        const handsInstance = new Hands({
-          /* ... */
+        holisticInstance.setOptions({
+          modelComplexity: 1,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
         });
-        setHands(handsInstance);
 
+        const handsInstance = new Hands({
+          locateFile: (file) =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+        });
+        handsInstance.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+
+        // Step 3: Wait for MediaPipe instances to fully initialize
+        console.log("⏳ Initializing MediaPipe libraries...");
+        await Promise.all([
+          holisticInstance.initialize(),
+          handsInstance.initialize(),
+        ]);
+
+        setHolistic(holisticInstance);
+        setHands(handsInstance);
+        console.log("✅ MediaPipe libraries initialized");
+
+        // Step 4: Signal that all AI components are ready
         setIsAIReady(true);
         console.log(
           "--- ✅ AIContext: All resources initialized successfully! ---"
@@ -65,7 +86,6 @@ export function AIProvider({ children }) {
     initializeAI();
   }, []);
 
-  // --- PASS LABELS THROUGH THE CONTEXT ---
   const value = { models, labels, holistic, hands, isAIReady, error };
 
   return <AIContext.Provider value={value}>{children}</AIContext.Provider>;
