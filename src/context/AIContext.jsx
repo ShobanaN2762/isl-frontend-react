@@ -6,6 +6,7 @@ const Hands = window.Hands;
 
 const AIContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAI() {
   return useContext(AIContext);
 }
@@ -23,7 +24,6 @@ export function AIProvider({ children }) {
       try {
         console.log("--- 🧠 AIContext: Initializing AI resources ---");
 
-        // Step 1: Concurrently load TensorFlow models and their labels
         const [staticModel, dynamicModel, staticLabels, dynamicLabels] =
           await Promise.all([
             tf.loadGraphModel("/isl_static_model_tfjs/model.json"),
@@ -39,7 +39,6 @@ export function AIProvider({ children }) {
         });
         console.log("✅ TensorFlow models and labels loaded");
 
-        // Step 2: Create instances of MediaPipe solutions
         const holisticInstance = new Holistic({
           locateFile: (file) =>
             `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`,
@@ -50,8 +49,10 @@ export function AIProvider({ children }) {
           minTrackingConfidence: 0.5,
         });
 
+        // --- THIS IS THE CORRECTED PART ---
         const handsInstance = new Hands({
           locateFile: (file) =>
+            // It must load from the '/hands/' folder, not '/holistic/'
             `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
         });
         handsInstance.setOptions({
@@ -61,7 +62,6 @@ export function AIProvider({ children }) {
           minTrackingConfidence: 0.5,
         });
 
-        // Step 3: Wait for MediaPipe instances to fully initialize
         console.log("⏳ Initializing MediaPipe libraries...");
         await Promise.all([
           holisticInstance.initialize(),
@@ -72,7 +72,6 @@ export function AIProvider({ children }) {
         setHands(handsInstance);
         console.log("✅ MediaPipe libraries initialized");
 
-        // Step 4: Signal that all AI components are ready
         setIsAIReady(true);
         console.log(
           "--- ✅ AIContext: All resources initialized successfully! ---"
