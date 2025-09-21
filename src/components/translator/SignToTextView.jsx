@@ -3,7 +3,7 @@ import { useAI } from "../../context/AIContext";
 
 const tf = window.tf;
 const drawConnectors = window.drawConnectors;
-const drawLandmarks = window.drawLandmarks; // This will now be used
+const drawLandmarks = window.drawLandmarks;
 const HAND_CONNECTIONS = window.HAND_CONNECTIONS;
 
 const extractStaticFeatures = (results) => {
@@ -24,18 +24,18 @@ function SignToTextView() {
   const canvasRef = useRef(null);
   const animationFrameId = useRef(null);
 
+  const predictionBuffer = useRef([]);
+  const noHandFrames = useRef(0);
+
   const [isCameraEnabled, setIsCameraEnabled] = useState(false);
   const [stream, setStream] = useState(null);
 
   const [sentence, setSentence] = useState([]);
-  const [predictionBuffer, setPredictionBuffer] = useState([]);
   const [stablePrediction, setStablePrediction] = useState("");
-  const noHandFrames = useRef(0);
+  const [lastAppendedSign, setLastAppendedSign] = useState(null);
 
   const BUFFER_SIZE = 8;
   const CONF_THRESHOLD = 0.85;
-
-  // --- THIS IS THE UPDATED FUNCTION ---
   const onResults = useCallback(
     (results) => {
       const canvasCtx = canvasRef.current.getContext("2d");
@@ -46,7 +46,6 @@ function SignToTextView() {
         canvasRef.current.height
       );
 
-      // Draw landmarks for both hands
       if (results.rightHandLandmarks) {
         drawConnectors(
           canvasCtx,
@@ -86,54 +85,55 @@ function SignToTextView() {
             confidence: probabilities[predictedIndex],
           };
         });
-        setPredictionBuffer((prev) => [
-          ...prev.slice(-BUFFER_SIZE + 1),
-          prediction,
-        ]);
+
+        // Update the ref without causing a re-render
+        predictionBuffer.current.push(prediction);
+        predictionBuffer.current = predictionBuffer.current.slice(-BUFFER_SIZE);
+
+        // Check for stability inside the loop
+        if (predictionBuffer.current.length === BUFFER_SIZE) {
+          const firstSign = predictionBuffer.current[0].sign;
+          const allSame = predictionBuffer.current.every(
+            (p) => p.sign === firstSign
+          );
+          const highConf = predictionBuffer.current.every(
+            (p) => p.confidence >= CONF_THRESHOLD
+          );
+
+          if (allSame && highConf) {
+            // ONLY update state when we have a stable prediction
+            setStablePrediction(firstSign);
+          }
+        }
       } else {
         noHandFrames.current++;
         if (noHandFrames.current > 20) {
-          setSentence((prev) =>
-            prev.length > 0 && prev[prev.length - 1] !== " "
-              ? [...prev, " "]
-              : prev
-          );
+          // This 'if' statement reads lastAppendedSign, so it must be a dependency
+          if (lastAppendedSign !== " ") {
+            setSentence((prev) => [...prev, " "]);
+            setLastAppendedSign(" ");
+          }
           noHandFrames.current = 0;
         }
       }
     },
-    [models.static, labels.static]
+    [models.static, labels.static, lastAppendedSign]
   );
 
-  // ... (The rest of the component remains the same)
-
+  // Effect to append the stable prediction to the sentence
   useEffect(() => {
-    if (predictionBuffer.length < BUFFER_SIZE) return;
-    const firstSign = predictionBuffer[0].sign;
-    const allSame = predictionBuffer.every((p) => p.sign === firstSign);
-    const highConf = predictionBuffer.every(
-      (p) => p.confidence >= CONF_THRESHOLD
-    );
-
-    if (allSame && highConf) {
-      setStablePrediction(firstSign);
-    }
-  }, [predictionBuffer]);
-
-  useEffect(() => {
-    if (
-      stablePrediction &&
-      (sentence.length === 0 ||
-        sentence[sentence.length - 1] !== stablePrediction)
-    ) {
+    // This 'if' statement also reads lastAppendedSign
+    if (stablePrediction && lastAppendedSign !== stablePrediction) {
       setSentence((prev) => {
-        const newSentence = [...prev];
+        let newSentence = [...prev];
         if (newSentence[newSentence.length - 1] === " ") newSentence.pop();
         return [...newSentence, stablePrediction];
       });
+      setLastAppendedSign(stablePrediction);
     }
-  }, [stablePrediction, sentence]);
+  }, [stablePrediction, lastAppendedSign, sentence]);
 
+  // Effects for camera and MediaPipe setup (unchanged)
   useEffect(() => {
     if (holistic) holistic.onResults(onResults);
   }, [holistic, onResults]);
@@ -173,8 +173,9 @@ function SignToTextView() {
   const stopCamera = () => {
     setIsCameraEnabled(false);
     setSentence([]);
-    setPredictionBuffer([]);
+    predictionBuffer.current = [];
     setStablePrediction("");
+    setLastAppendedSign(null);
   };
 
   if (aiError)
@@ -247,7 +248,10 @@ function SignToTextView() {
               readOnly
             ></textarea>
             <button
-              onClick={() => setSentence([])}
+              onClick={() => {
+                setSentence([]);
+                setLastAppendedSign(null);
+              }}
               className="btn btn-sm btn-outline-danger mt-2"
             >
               Clear Output
