@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 
 const tf = window.tf;
 const Holistic = window.Holistic;
@@ -19,10 +25,21 @@ export function AIProvider({ children }) {
   const [isAIReady, setIsAIReady] = useState(false);
   const [error, setError] = useState(null);
 
+  // Use a ref to prevent the initialization from running twice in Strict Mode
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
+    // If we've already tried to initialize, don't do it again.
+    if (hasInitialized.current) {
+      return;
+    }
+    hasInitialized.current = true;
+
     const initializeAI = async () => {
       try {
-        console.log("--- 🧠 AIContext: Initializing AI resources ---");
+        console.log(
+          "--- 🧠 AIContext: Initializing AI resources (single run) ---"
+        );
 
         const [staticModel, dynamicModel, staticLabels, dynamicLabels] =
           await Promise.all([
@@ -49,10 +66,8 @@ export function AIProvider({ children }) {
           minTrackingConfidence: 0.5,
         });
 
-        // --- THIS IS THE CORRECTED PART ---
         const handsInstance = new Hands({
           locateFile: (file) =>
-            // It must load from the '/hands/' folder, not '/holistic/'
             `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
         });
         handsInstance.setOptions({
@@ -83,7 +98,7 @@ export function AIProvider({ children }) {
     };
 
     initializeAI();
-  }, []);
+  }, []); // The empty array ensures this effect runs only on mount
 
   const value = { models, labels, holistic, hands, isAIReady, error };
 
