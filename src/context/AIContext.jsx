@@ -6,30 +6,31 @@ import React, {
   useRef,
 } from "react";
 
+// Get libraries from the global window object
 const tf = window.tf;
 const Holistic = window.Holistic;
-const Hands = window.Hands;
 
+// Create the context
 const AIContext = createContext();
 
+// Create a custom hook for easy access
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAI() {
   return useContext(AIContext);
 }
 
+// Create the provider component
 export function AIProvider({ children }) {
   const [models, setModels] = useState({ static: null, dynamic: null });
   const [labels, setLabels] = useState({ static: [], dynamic: [] });
   const [holistic, setHolistic] = useState(null);
-  const [hands, setHands] = useState(null);
   const [isAIReady, setIsAIReady] = useState(false);
   const [error, setError] = useState(null);
 
-  // Use a ref to prevent the initialization from running twice in Strict Mode
+  // This ref flag prevents re-initialization in React's Strict Mode
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    // If we've already tried to initialize, don't do it again.
     if (hasInitialized.current) {
       return;
     }
@@ -38,9 +39,10 @@ export function AIProvider({ children }) {
     const initializeAI = async () => {
       try {
         console.log(
-          "--- 🧠 AIContext: Initializing AI resources (single run) ---"
+          "--- 🧠 AIContext: Initializing AI resources (Holistic only) ---"
         );
 
+        // Concurrently load TensorFlow models and their labels
         const [staticModel, dynamicModel, staticLabels, dynamicLabels] =
           await Promise.all([
             tf.loadGraphModel("/isl_static_model_tfjs/model.json"),
@@ -56,6 +58,7 @@ export function AIProvider({ children }) {
         });
         console.log("✅ TensorFlow models and labels loaded");
 
+        // Create and configure the Holistic instance
         const holisticInstance = new Holistic({
           locateFile: (file) =>
             `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`,
@@ -66,27 +69,14 @@ export function AIProvider({ children }) {
           minTrackingConfidence: 0.5,
         });
 
-        const handsInstance = new Hands({
-          locateFile: (file) =>
-            `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-        });
-        handsInstance.setOptions({
-          maxNumHands: 2,
-          modelComplexity: 1,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5,
-        });
-
-        console.log("⏳ Initializing MediaPipe libraries...");
-        await Promise.all([
-          holisticInstance.initialize(),
-          handsInstance.initialize(),
-        ]);
+        // Wait for MediaPipe to be fully initialized
+        console.log("⏳ Initializing MediaPipe Holistic library...");
+        await holisticInstance.initialize();
 
         setHolistic(holisticInstance);
-        setHands(handsInstance);
-        console.log("✅ MediaPipe libraries initialized");
+        console.log("✅ MediaPipe Holistic initialized");
 
+        // Signal that all AI components are now ready
         setIsAIReady(true);
         console.log(
           "--- ✅ AIContext: All resources initialized successfully! ---"
@@ -98,9 +88,9 @@ export function AIProvider({ children }) {
     };
 
     initializeAI();
-  }, []); // The empty array ensures this effect runs only on mount
+  }, []); // Empty dependency array ensures this runs only once on mount
 
-  const value = { models, labels, holistic, hands, isAIReady, error };
+  const value = { models, labels, holistic, isAIReady, error };
 
   return <AIContext.Provider value={value}>{children}</AIContext.Provider>;
 }
