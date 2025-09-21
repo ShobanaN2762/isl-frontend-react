@@ -1,8 +1,5 @@
-// src/pages/Learning.jsx
-
 import React, { useState } from "react";
-import { learningModules } from "../data/LearningData";
-// import { useAuth } from "../context/AuthContext";
+import { learningModules } from "../data/learningData";
 import ModuleListView from "../components/learning/ModuleListView";
 import LessonView from "../components/learning/LessonsView";
 import PracticeView from "../components/learning/PracticeView";
@@ -13,24 +10,23 @@ function LearningPage() {
   const [completedLessons, setCompletedLessons] = useState(
     new Set(["intro-to-isl"])
   );
-
   const [practicingSign, setPracticingSign] = useState(null);
 
   const selectedModule = selectedModuleId
     ? learningModules.find((m) => m.id === selectedModuleId)
     : null;
 
-  const handleSelectModule = (moduleId) => {
-    setSelectedModuleId(moduleId);
-    setSelectedLessonId(null);
-  };
-
   const handleStartPractice = (sign, lesson) => {
     setPracticingSign({ ...sign, modelType: lesson.modelType });
   };
 
   const handleExitPractice = () => {
-    setPracticingSign(null); // Exit practice mode by clearing the state
+    setPracticingSign(null);
+  };
+
+  const handleSelectModule = (moduleId) => {
+    setSelectedModuleId(moduleId);
+    setSelectedLessonId(null);
   };
 
   const handleSelectLesson = (lessonId) => {
@@ -42,27 +38,21 @@ function LearningPage() {
     setSelectedLessonId(null);
   };
 
-  // A new function to go from a lesson back to the lesson list
   const handleBackToLessonList = () => {
     setSelectedLessonId(null);
   };
 
   const handleCompleteLesson = (lessonId) => {
-    // We create a new Set to ensure React detects the state change
     const newCompletedLessons = new Set(completedLessons);
     newCompletedLessons.add(lessonId);
     setCompletedLessons(newCompletedLessons);
   };
 
-  // If we are in practice mode, show the PracticeView. Otherwise, show the normal module/lesson view.
-  if (practicingSign) {
-    return <PracticeView sign={practicingSign} onExit={handleExitPractice} />;
-  }
-
+  // --- THIS IS THE UPDATED RENDER LOGIC ---
   return (
     <div className="container py-5">
       <div className="row g-4">
-        {/* Module List Column */}
+        {/* The Module List is now always visible on the left */}
         <div className="col-md-4">
           <ModuleListView
             modules={learningModules}
@@ -71,19 +61,22 @@ function LearningPage() {
           />
         </div>
 
-        {/* Lesson/Content Column */}
+        {/* The right column now conditionally shows either the LessonView or the PracticeView */}
         <div className="col-md-8">
-          <LessonView
-            module={selectedModule}
-            // Pass the selectedLessonId down
-            selectedLessonId={selectedLessonId}
-            onSelectLesson={handleSelectLesson}
-            onBackToModules={handleBackToModules} // Renamed for clarity
-            onBackToLessonList={handleBackToLessonList} // Pass the new function
-            completedLessons={completedLessons}
-            onCompleteLesson={handleCompleteLesson}
-            onStartPractice={handleStartPractice}
-          />
+          {practicingSign ? (
+            <PracticeView sign={practicingSign} onExit={handleExitPractice} />
+          ) : (
+            <LessonView
+              module={selectedModule}
+              selectedLessonId={selectedLessonId}
+              onSelectLesson={handleSelectLesson}
+              onBackToModules={handleBackToModules}
+              onBackToLessonList={handleBackToLessonList}
+              completedLessons={completedLessons}
+              onCompleteLesson={handleCompleteLesson}
+              onStartPractice={handleStartPractice}
+            />
+          )}
         </div>
       </div>
     </div>
