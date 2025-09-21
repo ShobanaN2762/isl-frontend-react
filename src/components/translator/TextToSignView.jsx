@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 function TextToSignView() {
   const [text, setText] = useState("");
@@ -8,12 +8,14 @@ function TextToSignView() {
 
   const suggestions = ["Good Morning", "Thank You", "What Is Your Name"];
 
-  const handleTranslate = () => {
+  // --- 1. Wrap handleTranslate in useCallback ---
+  // This function now only gets recreated when 'text' changes.
+  const handleTranslate = useCallback(() => {
     if (!text.trim()) return;
     setVideoStatus("loading");
     const formattedText = text.trim().toLowerCase().replace(/ /g, "_");
     setVideoSrc(`/videos/sentences/${formattedText}.mp4`);
-  };
+  }, [text]); // It depends on the 'text' state
 
   const handleClear = () => {
     setText("");
@@ -25,16 +27,17 @@ function TextToSignView() {
     setText(suggestion);
   };
 
-  // This effect will automatically trigger translation when text changes after a small delay
+  // --- 2. Add the stable handleTranslate function to the dependency array ---
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (text) handleTranslate();
-    }, 500); // 500ms delay
+      // We don't need to check for text here, as the effect only runs when text changes.
+      handleTranslate();
+    }, 500);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [text]);
+  }, [text, handleTranslate]); // Dependency array is now correct
 
   return (
     <div className="row g-4">
