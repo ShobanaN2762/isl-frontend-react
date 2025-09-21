@@ -6,22 +6,46 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-import { useAuth } from "./context/AuthContext.jsx";
+import { useAuth } from "./context/AuthContext";
+import { useAI } from "./context/AIContext";
 
-import Header from "./components/Header.jsx";
-import Footer from "./components/Footer.jsx";
-import AuthModal from "./components/AuthModal.jsx";
+// Import Components and Pages
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import AuthModal from "./components/AuthModal";
+import LoadingScreen from "./components/LoadingScreen";
+import HomePage from "./pages/HomePage";
+import Dashboard from "./pages/Dashboard";
+import LearningPage from "./pages/Learning";
+import TranslatorPage from "./pages/Translator";
+import Profile from "./pages/Profile";
 
-import HomePage from "./pages/HomePage.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import Learning from "./pages/Learning.jsx";
-import Translator from "./pages/Translator.jsx";
-import Profile from "./pages/Profile.jsx";
+// A component to protect routes that require authentication
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/" />;
+}
 
-// A helper component to decide whether to show the header and footer
+// The main App component now handles the initial loading screen
+function App() {
+  const { isAIReady, error: aiError } = useAI();
+
+  // Show the splash screen until the AI models are fully loaded
+  if (!isAIReady) {
+    return <LoadingScreen message="Loading AI Models..." error={aiError} />;
+  }
+
+  // Once AI is ready, show the main application
+  return (
+    <Router>
+      <AppLayout />
+    </Router>
+  );
+}
+
+// The AppLayout component contains the main structure
 function AppLayout() {
   const location = useLocation();
-  // Don't show header/footer on the homepage.
   const showHeaderFooter = location.pathname !== "/";
 
   return (
@@ -30,7 +54,6 @@ function AppLayout() {
       <main className="flex-grow-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={
@@ -43,7 +66,7 @@ function AppLayout() {
             path="/learn"
             element={
               <ProtectedRoute>
-                <Learning />
+                <LearningPage />
               </ProtectedRoute>
             }
           />
@@ -51,7 +74,7 @@ function AppLayout() {
             path="/translate"
             element={
               <ProtectedRoute>
-                <Translator />
+                <TranslatorPage />
               </ProtectedRoute>
             }
           />
@@ -63,28 +86,12 @@ function AppLayout() {
               </ProtectedRoute>
             }
           />
-          {/* Redirect any other path to the home page or dashboard */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
-      <Footer />
+      {showHeaderFooter && <Footer />}
       <AuthModal />
     </div>
-  );
-}
-
-// A component to protect routes that require authentication
-function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/" />;
-}
-
-// The main App component now just sets up the Router
-function App() {
-  return (
-    <Router>
-      <AppLayout />
-    </Router>
   );
 }
 
