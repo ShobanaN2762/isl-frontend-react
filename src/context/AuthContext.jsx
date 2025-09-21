@@ -114,7 +114,12 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("completedLessons"); // Also clear lesson data
     console.log("You have been logged out.");
   };
-
+  const updateUser = (updatedUserData) => {
+    // This function will be called after a successful profile update
+    const newUser = { ...user, ...updatedUserData };
+    setUser(newUser);
+    localStorage.setItem("isl_auth_token", JSON.stringify(newUser));
+  };
   // The value provided to all children components
   const value = {
     user,
@@ -124,6 +129,7 @@ export function AuthProvider({ children }) {
     logout,
     isModalOpen,
     modalMode,
+    updateUser,
     openAuthModal,
     closeAuthModal,
   };
