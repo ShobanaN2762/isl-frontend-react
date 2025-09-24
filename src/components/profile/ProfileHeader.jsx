@@ -1,5 +1,5 @@
 import React from "react";
-import { formatDate } from "../../utils/helpers";
+import { formatDate } from "../../utils/helper";
 
 function ProfileHeader({ user, isEditing, onEditToggle }) {
   if (!user) return null;
